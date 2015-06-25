@@ -223,6 +223,12 @@ function config()
 	$bannerAds['timezone'] 		= trim($_POST['timezone']);
 	$bannerAds['timeformat'] 	= trim($_POST['timeformat']);
 	$bannerAds['blockip'] 		= trim($_POST['blockip']);
+	$bannerAds['mysql_username']    = trim($_POST['mysql_username']);
+	$bannerAds['mysql_password']    = trim($_POST['mysql_password']);
+	$bannerAds['mysql_database']    = trim($_POST['mysql_database']);
+	$bannerAds['mysql_host']        = trim($_POST['mysql_host']);
+	$bannerAds['mysql_port']        = (int)trim($_POST['mysql_port']);
+
         writeads();
         menu();
     } else if (isset($_POST['cancel'])) {
@@ -248,6 +254,7 @@ function config()
 	}
 	echo '</select><hr width="550" /><li><b>Time format</b></li><br><br>This controls only the display of times inputed - it has no functional effect beyond readability.<br><br>Time format: <input type="text" name="timeformat" value="' .$bannerAds['timeformat']. '" />';
 	echo '<hr width="550" /><li><b>Blocked IP Address:</b></li><br><br>If you want to exclude a particular IP (your office maybe) from counting towards the impressions and click through counts, enter it here (or leave blank). <br><br>IP Address: <input type="text" name="blockip" value="' .$bannerAds['blockip']. '" />';
+	echo '<hr width="550" /><li><b>MySQL Settings</b></li><br /><br />If you\'re using a MySQL database, enter the settings here (or leave blank):<br /><br />MySQL username: <input type="text" name="mysql_username" value="'.$bannerAds['mysql_username'].'" /><br />MySQL password: <input type="text" name="mysql_password" value="'.$bannerAds['mysql_password'].'" /><br />MySQL database name: <input type="text" name="mysql_database" value="'.$bannerAds['mysql_database'].'" /><br />MySQL Server hostname: <input type="text" name="mysql_host" value="'.$bannerAds['mysql_host'].'" /> Port: <input type="number" name="mysql_port" value="'.$bannerAds['mysql_port'].'" style="width:4em" /><br />';
 	echo '<hr width="550" /><br /><br /><input type="submit" name="save" value="Save" /> <input type="submit" name="cancel" value="Cancel" />';
         foot();
     }
