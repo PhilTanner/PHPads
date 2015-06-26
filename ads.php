@@ -10,12 +10,12 @@ class bannerAds
     function bannerAds($id = null, $max = 1, $width = 0, $height = 0)
     {
         global $ads, $bannerAds, $bannerAdsTime;
-        if ($id != null) {
+        if (!is_null($id)) {
             for ($i = 0; $i < count($ads); $i++) {
                 if(preg_match("/^$id\|\|/", $ads[$i])) {
                     $data = explode('||', $ads[$i]);
 		    // Only return if we've still got some impressions left and we're within time
-		    if (($data[ PHPADS_ADELEMENT_REMAINING ] > 0 || $data[ PHPADS_ADELEMENT_REMAINING ] == -1) && ($data[ PHPADS_ADELEMENT_ENDDATE ] > $bannerAdsTime && $data[ PHPADS_ADELEMENT_STARTDATE ] < $bannerAdsTime) && $data[ PHPADS_ADELEMENT_ENABLED ]) {
+		    if (($data[ PHPADS_ADELEMENT_REMAINING ] > 0 || $data[ PHPADS_ADELEMENT_REMAINING ] == -1) && (($data[ PHPADS_ADELEMENT_ENDDATE ] > $bannerAdsTime || $data[ PHPADS_ADELEMENT_ENDDATE ] == 99999999) && $data[ PHPADS_ADELEMENT_STARTDATE ] < $bannerAdsTime) && $data[ PHPADS_ADELEMENT_ENABLED ]) {
 			if ($data[PHPADS_ADELEMENT_ADTYPE]==PHPADS_ADTYPE_OTHER) {
 		            $this->ad[] = str_replace("\n","",implode("",file('uploads/'.$data[PHPADS_ADELEMENT_ID]."_".$data[PHPADS_ADELEMENT_NAME].'.inc.txt')));
 		        } else {
