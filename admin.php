@@ -98,11 +98,7 @@ function adform($data, $mode) {
 	echo '<form method="post" action="admin.php" enctype="multipart/form-data">';
 	echo '<input type="hidden" name="action" value="'.$mode.'" />';
 	echo '<table width="550" border="1" cellspacing="0" cellpadding="1">';
-	if ($mode=='edit') {
-	    echo '<input type="hidden" name="id" value="' .$data[PHPADS_ADELEMENT_ID]. '" />';
-	} elseif ($mode=='add') {
-	    echo '<tr><td><b>Custom Ad ID:</b><br /><span class="smalltext">Letters and numbers only<br />Leave blank if no custom ID</span></td><td><input type="text" name="ad_custom_id" size="30" /></td></tr>';
-	}
+	echo '<input type="hidden" name="id" value="' .($mode=='edit'?$data[PHPADS_ADELEMENT_ID]:0). '" />';
 	echo '<tr><td><b>Ad Name:</b></td><td><input type="text" name="ad_name" value="' .$data[ PHPADS_ADELEMENT_NAME ]. '" size="30" /></td></tr>';
 	echo '<tr><td><b>Is Enabled?</b></td><td><input type="checkbox" ' .$isen. ' name="ad_en" value="1" /> Ad is Enabled</td></tr>';
         echo '<tr><th>Ad Type:</th><td><select name="ad_type" id="ad_type"><option value="'.PHPADS_ADTYPE_IMAGE.'"'.($data[PHPADS_ADELEMENT_ADTYPE]==PHPADS_ADTYPE_IMAGE?' selected="selected"':'').'>Image</option><option value="'.PHPADS_ADTYPE_OTHER.'"'.($data[PHPADS_ADELEMENT_ADTYPE]==PHPADS_ADTYPE_OTHER?' selected="selected"':'').'>Other</option></select></td><tr>';
@@ -299,58 +295,73 @@ function view()
 }
 function edit()
 {
-    global $ads;
+    global $ads, $bannerAds;
     if (!isset($_REQUEST['id'])) {
         die('No Ad ID was Specified');
     }
     if (isset($_POST['save'])) {
-        for ($i = 0; $i < count($ads); $i++) {
-            if(preg_match('/^' .$_POST['id']. '\|\|/', $ads[$i])) {
-                $data = explode('||', $ads[$i]);
+	
+	if (trim(strlen($bannerAds['mysql_host'] . $bannerAds['mysql_username'] . $bannerAds['mysql_password'] . $bannerAds['mysql_database'] . (int)$bannerAds['mysql_port'])) > 0) {
+
+	        $mysqli = new mysqli($bannerAds['mysql_host'], $bannerAds['mysql_username'], $bannerAds['mysql_password'], $bannerAds['mysql_database'], (int)$bannerAds['mysql_port']);
+	        if ($mysqli->connect_error) {
+	            die('Connect Error (' . $mysqli->connect_errno . ') ' . $mysqli->connect_error);
+        	}
+
+	        if (mysqli_connect_error()) {
+	            die('Connect Error (' . mysqli_connect_errno() . ') ' . mysqli_connect_error());
+        	}
+
+		$data = array();
+		$sql = 'UPDATE `ads` SET';
                 if (isset($_POST['ad_en']) && $_POST['ad_en'] == 1) {
-                    $data[ PHPADS_ADELEMENT_ENABLED ] = 1;
+                    $sql .= ' `enabled` = 1,';
                 } else {
-                    $data[ PHPADS_ADELEMENT_ENABLED ] = 0;
+		    $sql .= ' `enabled` = 0,';
                 }
                 if (isset($_POST['ad_reset']) && $_POST['ad_reset'] == 1) {
-                    $data[ PHPADS_ADELEMENT_IMPRESSIONS ] = 0;
-                    $data[ PHPADS_ADELEMENT_CLICKTHRUS ] = 0;
+		    $sql .= ' `impressions` = 0, `clickthrus` = 0,';
                 }
                 if (isset($_POST['ad_noexpires']) && $_POST['ad_noexpires'] == 1) {
-                    $data[ PHPADS_ADELEMENT_ENDDATE ] = '99999999';
+                    $sql .= ' `enddate` = NULL,';
                 } else {
-                    $data[ PHPADS_ADELEMENT_ENDDATE ] = mktime(0, 0, 0, $_POST['ad_expires_month'], $_POST['ad_expires_day'], $_POST['ad_expires_year']);
+		    $sql .= ' `enddate` = \''. (int)$_POST['ad_expires_year'].'-'.(int)$_POST['ad_expires_month'].'-'.$_POST['ad_expires_day'].'\',';
                 }
-                $data[ PHPADS_ADELEMENT_WEIGHTING ] = $_POST['ad_weight'];
-                $data[ PHPADS_ADELEMENT_REMAINING ] = $_POST['ad_remain'];
-                $data[ PHPADS_ADELEMENT_WIDTH ] = $_POST['ad_width'];
-                $data[ PHPADS_ADELEMENT_HEIGHT ] = $_POST['ad_height'];
-                $data[ PHPADS_ADELEMENT_LINK_URI ] = $_POST['ad_link'];
-                $data[ PHPADS_ADELEMENT_IMAGE_URI ] = $_POST['ad_image'];
-                $data[ PHPADS_ADELEMENT_NAME ] = $_POST['ad_name'];
-		$data[ PHPADS_ADELEMENT_STARTDATE ] = mktime(0, 0, 0, (int)$_POST['ad_starts_month'], (int)$_POST['ad_starts_day'], (int)$_POST['ad_starts_year']); 
-		$data[ PHPADS_ADELEMENT_ADTYPE ] = (int)$_POST['ad_type'];
+		$sql .= ' `weighting` = '.(int)$_POST['ad_weight'].',';
+                $sql .= ' `remaining` = '.(int)$_POST['ad_remain'].',';
+                $sql .= ' `width` = '.(int)$_POST['ad_width'].',';
+                $sql .= ' `height` = '.(int)$_POST['ad_height'].',';
+                $sql .= ' `link_uri` = \''.mysqli_real_escape_string($mysqli,$_POST['ad_link']).'\',';
+                $sql .= ' `image_uri` = \''.mysqli_real_escape_string($mysqli,$_POST['ad_image']).'\',';
+                $sql .= ' `name` = \''.mysqli_real_escape_string($mysqli,$_POST['ad_name']).'\',';
+                $sql .= ' `startdate` = \''.(int)$_POST['ad_starts_year'].'-'.(int)$_POST['ad_starts_month'].'-'.(int)$_POST['ad_starts_day'].'\',';
+                $sql .= ' `adtype` = '.(int)$_POST['ad_type'].',';
+		$sql .= ' `othercontent` = \''.mysqli_real_escape_string($mysqli,str_replace("\n","", $_POST['otherinfo'])).'\'';
 
-		$data[PHPADS_ADELEMENT_OTHERCONTENT] = str_replace("\n","", $_POST['otherinfo']);
-		$ads[$i] = join('||', $data);
+		$sql .= ' WHERE `id` = '.(int)$_POST['id'].' LIMIT 1;';
 
-                break;
-            }
-        }
-        writeads();
+	        $mysqli->query($sql);
+	        $mysqli->close();
+	} 
+        readads();
         view();
     } else if (isset($_POST['delete'])) {
         if (!isset($_POST['confirm_delete']) || $_POST['confirm_delete'] != 1) {
             die('You did not confirm the delete. <a href="javascript:window.history.go(-1);">[Back]</a>');
         }
-	$nads = array();
-        foreach ($ads as $ad) {
-            if(!preg_match('/^' .$_POST['id']. '\|\|/', $ad)) {
-                $nads[] = $ad;
-            }
-        }
-        $ads = $nads;
-        writeads();
+	if (trim(strlen($bannerAds['mysql_host'] . $bannerAds['mysql_username'] . $bannerAds['mysql_password'] . $bannerAds['mysql_database'] . (int)$bannerAds['mysql_port'])) > 0) {
+                $mysqli = new mysqli($bannerAds['mysql_host'], $bannerAds['mysql_username'], $bannerAds['mysql_password'], $bannerAds['mysql_database'], (int)$bannerAds['mysql_port']);
+                if ($mysqli->connect_error) {
+                    die('Connect Error (' . $mysqli->connect_errno . ') ' . $mysqli->connect_error);
+                }
+
+                if (mysqli_connect_error()) {
+                    die('Connect Error (' . mysqli_connect_errno() . ') ' . mysqli_connect_error());
+                }
+		$mysqli->query('DELETE FROM `ads` WHERE `id` = '.(int)$_POST['id'].' LIMIT 1;');
+                $mysqli->close();
+	}
+	readads();
         menu();
     } else if (isset($_POST['cancel'])) {
         view();
@@ -376,39 +387,47 @@ function add()
 {
     global $bannerAds, $ads;
     if (isset($_POST['save'])) {
-        $data = array(11);
-        if ($_POST['ad_custom_id'] != '') {
-            $data[ PHPADS_ADELEMENT_ID ] = $_POST['ad_custom_id'];
-        } else {
-            $data[ PHPADS_ADELEMENT_ID ] = $bannerAds['next_autoindex'];
-            $bannerAds['next_autoindex']++;
-        }
-        if (isset($_POST['ad_en']) && $_POST['ad_en'] == 1) {
-            $data[ PHPADS_ADELEMENT_ENABLED ] = 1;
-        } else {
-            $data[ PHPADS_ADELEMENT_ENABLED ] = 0;
-        }
-        $data[ PHPADS_ADELEMENT_WEIGHTING ] = $_POST['ad_weight'];
-        if (isset($_POST['ad_noexpires']) && $_POST['ad_noexpires'] == 1) {
-            $data[ PHPADS_ADELEMENT_ENDDATE ] = '99999999';
-        } else {
-            $data[ PHPADS_ADELEMENT_ENDDATE ] = mktime(0, 0, 0, $_POST['ad_expires_month'], $_POST['ad_expires_day'], $_POST['ad_expires_year']);
-        }
-        $data[ PHPADS_ADELEMENT_REMAINING ] = (int)$_POST['ad_remain'];
-        $data[ PHPADS_ADELEMENT_IMPRESSIONS ] = 0;
-        $data[ PHPADS_ADELEMENT_CLICKTHRUS ] = 0;
-        $data[ PHPADS_ADELEMENT_WIDTH ] = (int)$_POST['ad_width'];
-        $data[ PHPADS_ADELEMENT_HEIGHT ] = (int)$_POST['ad_height'];
-        $data[ PHPADS_ADELEMENT_LINK_URI ] = $_POST['ad_link'];
-        $data[ PHPADS_ADELEMENT_IMAGE_URI ] = $_POST['ad_image'];
-        $data[ PHPADS_ADELEMENT_NAME ] = stripslashes($_POST['ad_name']);
-	$data[ PHPADS_ADELEMENT_STARTDATE ] = mktime(0, 0, 0, (int)$_POST['ad_starts_month'], (int)$_POST['ad_starts_day'], (int)$_POST['ad_starts_year']);
-        $data[ PHPADS_ADELEMENT_ADTYPE ] = (int)$_POST['ad_type'];
-	$data[PHPADS_ADELEMENT_OTHERCONTENT] = str_replace("\n","", $_POST['otherinfo']);
+        if (trim(strlen($bannerAds['mysql_host'] . $bannerAds['mysql_username'] . $bannerAds['mysql_password'] . $bannerAds['mysql_database'] . (int)$bannerAds['mysql_port'])) > 0) {
 
-        $ads[] = join('||', $data);
-        writeads();
-        menu();
+                $mysqli = new mysqli($bannerAds['mysql_host'], $bannerAds['mysql_username'], $bannerAds['mysql_password'], $bannerAds['mysql_database'], (int)$bannerAds['mysql_port']);
+                if ($mysqli->connect_error) {
+                    die('Connect Error (' . $mysqli->connect_errno . ') ' . $mysqli->connect_error);
+                }
+
+                if (mysqli_connect_error()) {
+                    die('Connect Error (' . mysqli_connect_errno() . ') ' . mysqli_connect_error());
+                }
+
+                $data = array();
+                $sql = 'INSERT INTO `ads` (`enabled`,`enddate`,`weighting`,`remaining`,`width`,`height`,`link_uri`,`image_uri`,`name`,`startdate`,`adtype`,`othercontent`) VALUES (';
+                if (isset($_POST['ad_en']) && $_POST['ad_en'] == 1) {
+                    $sql .= '1,';
+                } else {
+                    $sql .= '0,';
+                }
+                if (isset($_POST['ad_noexpires']) && $_POST['ad_noexpires'] == 1) {
+                    $sql .= 'NULL,';
+                } else {
+                    $sql .= '\''. (int)$_POST['ad_expires_year'].'-'.(int)$_POST['ad_expires_month'].'-'.$_POST['ad_expires_day'].'\',';
+                }
+                $sql .= (int)$_POST['ad_weight'].',';
+                $sql .= (int)$_POST['ad_remain'].',';
+                $sql .= (int)$_POST['ad_width'].',';
+                $sql .= (int)$_POST['ad_height'].',';
+                $sql .= '\''.mysqli_real_escape_string($mysqli,$_POST['ad_link']).'\',';
+                $sql .= '\''.mysqli_real_escape_string($mysqli,$_POST['ad_image']).'\',';
+                $sql .= '\''.mysqli_real_escape_string($mysqli,$_POST['ad_name']).'\',';
+                $sql .= '\''.(int)$_POST['ad_starts_year'].'-'.(int)$_POST['ad_starts_month'].'-'.(int)$_POST['ad_starts_day'].'\',';
+                $sql .= (int)$_POST['ad_type'].',';
+                $sql .= '\''.mysqli_real_escape_string($mysqli,str_replace("\n","", $_POST['otherinfo'])).'\'';
+
+                $sql .= ');';
+
+                $mysqli->query($sql);
+                $mysqli->close();
+        }
+        readads();
+        view();
     } else if (isset($_POST['cancel'])) {
         view();
     } else {
