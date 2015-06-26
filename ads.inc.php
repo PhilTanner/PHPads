@@ -76,7 +76,7 @@ function writeads()
     global $bannerAdsPath, $ads, $bannerAds;
     $data = fopen($bannerAdsPath, 'w') or die();
     flock($data, LOCK_EX) or die();
-    fputs($data, @join("\n", $ads)."\n");
+//    fputs($data, @join("\n", $ads)."\n");
     while (list ($key, $val) = each ($bannerAds)) {
         if ($key != '') {
             fputs($data, $key.'='.$val."\n");
