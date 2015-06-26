@@ -35,39 +35,42 @@ foreach ($lines as $line) {
         }
     }
 }
-if (trim(strlen($bannerAds['mysql_host'] . $bannerAds['mysql_username'] . $bannerAds['mysql_password'] . $bannerAds['mysql_database'] . (int)$bannerAds['mysql_port'])) > 0) {
+function readads() {
+	global $bannerAds,$ads;
+	if (trim(strlen($bannerAds['mysql_host'] . $bannerAds['mysql_username'] . $bannerAds['mysql_password'] . $bannerAds['mysql_database'] . (int)$bannerAds['mysql_port'])) > 0) {
 
-	$mysqli = new mysqli($bannerAds['mysql_host'], $bannerAds['mysql_username'], $bannerAds['mysql_password'], $bannerAds['mysql_database'], (int)$bannerAds['mysql_port']);
-	if ($mysqli->connect_error) {
-	    die('Connect Error (' . $mysqli->connect_errno . ') ' . $mysqli->connect_error);
-	}
-
-	if (mysqli_connect_error()) {
-	    die('Connect Error (' . mysqli_connect_errno() . ') ' . mysqli_connect_error());
-	}
-
-	if ($result = $mysqli->query("SELECT * FROM `ads`;") ) {
-		$ads = array();
-		while ($row = $result->fetch_row()) {
-			if (is_null($row[PHPADS_ADELEMENT_ENDDATE])) {
-				$row[PHPADS_ADELEMENT_ENDDATE] = 99999999;
-			} else {
-				$row[PHPADS_ADELEMENT_ENDDATE] = strtotime($row[PHPADS_ADELEMENT_ENDDATE]);
-                        }
-			if (is_null($row[PHPADS_ADELEMENT_STARTDATE])) {
-				$row[PHPADS_ADELEMENT_STARTDATE] = 99999999;
-                        } else {
-				$row[PHPADS_ADELEMENT_STARTDATE] = strtotime($row[PHPADS_ADELEMENT_STARTDATE]);
-			}
-			$ads[] = implode("||",$row);
+		$mysqli = new mysqli($bannerAds['mysql_host'], $bannerAds['mysql_username'], $bannerAds['mysql_password'], $bannerAds['mysql_database'], (int)$bannerAds['mysql_port']);
+		if ($mysqli->connect_error) {
+		    die('Connect Error (' . $mysqli->connect_errno . ') ' . $mysqli->connect_error);
 		}
-		$result->close();
+
+		if (mysqli_connect_error()) {
+		    die('Connect Error (' . mysqli_connect_errno() . ') ' . mysqli_connect_error());
+		}
+
+		if ($result = $mysqli->query("SELECT * FROM `ads`;") ) {
+			$ads = array();
+			while ($row = $result->fetch_row()) {
+				if (is_null($row[PHPADS_ADELEMENT_ENDDATE])) {
+					$row[PHPADS_ADELEMENT_ENDDATE] = 99999999;
+				} else {
+					$row[PHPADS_ADELEMENT_ENDDATE] = strtotime($row[PHPADS_ADELEMENT_ENDDATE]);
+                	        }
+				if (is_null($row[PHPADS_ADELEMENT_STARTDATE])) {
+					$row[PHPADS_ADELEMENT_STARTDATE] = 99999999;
+	                        } else {
+					$row[PHPADS_ADELEMENT_STARTDATE] = strtotime($row[PHPADS_ADELEMENT_STARTDATE]);
+				}
+				$ads[] = implode("||",$row);
+			}
+			$result->close();
+		}
+
+		$mysqli->close();
 	}
-
-	$mysqli->close();
 }
-
 date_default_timezone_set($bannerAds['timezone']);
+readads();
 function writeads()
 {
     global $bannerAdsPath, $ads, $bannerAds;
