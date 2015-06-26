@@ -17,18 +17,30 @@ class bannerAds
 		    // Only return if we've still got some impressions left and we're within time
 		    if (($data[ PHPADS_ADELEMENT_REMAINING ] > 0 || $data[ PHPADS_ADELEMENT_REMAINING ] == -1) && (($data[ PHPADS_ADELEMENT_ENDDATE ] > $bannerAdsTime || $data[ PHPADS_ADELEMENT_ENDDATE ] == 99999999) && $data[ PHPADS_ADELEMENT_STARTDATE ] < $bannerAdsTime) && $data[ PHPADS_ADELEMENT_ENABLED ]) {
 			if ($data[PHPADS_ADELEMENT_ADTYPE]==PHPADS_ADTYPE_OTHER) {
-		            $this->ad[] = str_replace("\n","",implode("",file('uploads/'.$data[PHPADS_ADELEMENT_ID]."_".$data[PHPADS_ADELEMENT_NAME].'.inc.txt')));
+		            $this->ad[] = $data[PHPADS_ADELEMENT_OTHERCONTENT];
 		        } else {
  		            $this->ad[] = "<a href=\"" .$bannerAds['click_url']. "?id=".urlencode($data[ PHPADS_ADELEMENT_ID ])."\" target=\"" .$bannerAds['target']. "\"><img src=\"" .$data[ PHPADS_ADELEMENT_IMAGE_URI ]. "\" alt=\"" .$data[ PHPADS_ADELEMENT_NAME ]. "\" width=\"" .$data[ PHPADS_ADELEMENT_WIDTH ]. "\" height=\"" .$data[ PHPADS_ADELEMENT_HEIGHT ]. "\" border=\"" .$bannerAds['border']. "\" /></a>";
 		        }
 
 			if ($data[ PHPADS_ADELEMENT_REMAINING ] > 0) { // Don't turn 0 impressions left into infinite impressions
                             if ($_SERVER['REMOTE_ADDR'] != $bannerAds['blockip']) {
-				$data[ PHPADS_ADELEMENT_REMAINING ]--;
+			        if (trim(strlen($bannerAds['mysql_host'] . $bannerAds['mysql_username'] . $bannerAds['mysql_password'] . $bannerAds['mysql_database'] . (int)$bannerAds['mysql_port'])) > 0) {
+			                $mysqli = new mysqli($bannerAds['mysql_host'], $bannerAds['mysql_username'], $bannerAds['mysql_password'], $bannerAds['mysql_database'], (int)$bannerAds['mysql_port']);
+			                if ($mysqli->connect_error) die('Connect Error (' . $mysqli->connect_errno . ') ' . $mysqli->connect_error);
+			                if (mysqli_connect_error()) die('Connect Error (' . mysqli_connect_errno() . ') ' . mysqli_connect_error());
+                			$mysqli->query('UPDATE `ads` SET `remaining`=`remaining`-1 WHERE `id`='.(int)$id.' LIMIT 1;');
+					$mysqli->close();
+        			}
 			    }
 			}
 			if ($_SERVER['REMOTE_ADDR'] != $bannerAds['blockip']) {
-				$data[ PHPADS_ADELEMENT_IMPRESSIONS ]++;
+                                if (trim(strlen($bannerAds['mysql_host'] . $bannerAds['mysql_username'] . $bannerAds['mysql_password'] . $bannerAds['mysql_database'] . (int)$bannerAds['mysql_port'])) > 0) {
+                                        $mysqli = new mysqli($bannerAds['mysql_host'], $bannerAds['mysql_username'], $bannerAds['mysql_password'], $bannerAds['mysql_database'], (int)$bannerAds['mysql_port']);
+                                        if ($mysqli->connect_error) die('Connect Error (' . $mysqli->connect_errno . ') ' . $mysqli->connect_error);
+                                        if (mysqli_connect_error()) die('Connect Error (' . mysqli_connect_errno() . ') ' . mysqli_connect_error());
+                                        $mysqli->query('UPDATE `ads` SET `impressions`=`impressions`+1 WHERE `id`='.(int)$id.' LIMIT 1;');
+                                        $mysqli->close();
+                                }
 			}
 			$ads[$i] = join('||', $data);
                     }
@@ -80,18 +92,30 @@ class bannerAds
                 $data = explode('||', $ads[$theone]);
 
 		if ($data[PHPADS_ADELEMENT_ADTYPE]==PHPADS_ADTYPE_OTHER) {
-                    $this->ad[] .= str_replace("\n","",implode("",file('uploads/'.$data[PHPADS_ADELEMENT_ID]."_".$data[PHPADS_ADELEMENT_NAME].'.inc.txt')));
+                    $this->ad[] .= $data[PHPADS_ADELEMENT_OTHERCONTENT];
                 } else {
                     $this->ad[] .= "<a href=\"" .$bannerAds['click_url']. "?id=".urlencode($data[ PHPADS_ADELEMENT_ID ])."\" target=\"" .$bannerAds['target']. "\"><img src=\"" .$data[ PHPADS_ADELEMENT_IMAGE_URI ]. "\" alt=\"" .$data[ PHPADS_ADELEMENT_NAME ]. "\" width=\"" .$data[ PHPADS_ADELEMENT_WIDTH ]. "\" height=\"" .$data[ PHPADS_ADELEMENT_HEIGHT ]. "\" border=\"" .$bannerAds['border']. "\" /></a>";
                 }
 
                 if ($data[ PHPADS_ADELEMENT_REMAINING ] > 0) { // Remaining impressions check already taken care of in previous for loop
                     if ($_SERVER['REMOTE_ADDR'] != $bannerAds['blockip']) {
-			$data[ PHPADS_ADELEMENT_REMAINING ]--;
+                        if (trim(strlen($bannerAds['mysql_host'] . $bannerAds['mysql_username'] . $bannerAds['mysql_password'] . $bannerAds['mysql_database'] . (int)$bannerAds['mysql_port'])) > 0) {
+                               $mysqli = new mysqli($bannerAds['mysql_host'], $bannerAds['mysql_username'], $bannerAds['mysql_password'], $bannerAds['mysql_database'], (int)$bannerAds['mysql_port']);
+                               if ($mysqli->connect_error) die('Connect Error (' . $mysqli->connect_errno . ') ' . $mysqli->connect_error);
+                               if (mysqli_connect_error()) die('Connect Error (' . mysqli_connect_errno() . ') ' . mysqli_connect_error());
+                               $mysqli->query('UPDATE `ads` SET `remaining`=`remaining`-1 WHERE `id`='.(int)$data[PHPADS_ADELEMENT_ID].' LIMIT 1;');
+                               $mysqli->close();
+                        }
 		    }
 		}
 		if ($_SERVER['REMOTE_ADDR'] != $bannerAds['blockip']) {
-                    $data[ PHPADS_ADELEMENT_IMPRESSIONS ]++;
+                        if (trim(strlen($bannerAds['mysql_host'] . $bannerAds['mysql_username'] . $bannerAds['mysql_password'] . $bannerAds['mysql_database'] . (int)$bannerAds['mysql_port'])) > 0) {
+                               $mysqli = new mysqli($bannerAds['mysql_host'], $bannerAds['mysql_username'], $bannerAds['mysql_password'], $bannerAds['mysql_database'], (int)$bannerAds['mysql_port']);
+                               if ($mysqli->connect_error) die('Connect Error (' . $mysqli->connect_errno . ') ' . $mysqli->connect_error);
+                               if (mysqli_connect_error()) die('Connect Error (' . mysqli_connect_errno() . ') ' . mysqli_connect_error());
+                               $mysqli->query('UPDATE `ads` SET `impressions`=`impressions`+1 WHERE `id`='.(int)$data[PHPADS_ADELEMENT_ID].' LIMIT 1;');
+                               $mysqli->close();
+                        }
 		}
                 $ads[$theone] = join('||', $data);
 		$neligible = array();
