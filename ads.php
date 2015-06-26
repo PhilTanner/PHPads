@@ -129,7 +129,6 @@ class bannerAds
                 unset($neligible);
             }
         }
-        writeads();
     }
 }
 ?>
