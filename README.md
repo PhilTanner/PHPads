@@ -1,5 +1,7 @@
 # PHPads
-Simple PHP banner ad script that requires no MySQL
+Simple PHP banner ad script ~~that requires no MySQL~~
+
+I know this project description specifically says it requires no MySQL, so creating a MySQL Version branch seems odd, but I found that when dealing with 125,000+ impressions a day, the ads.dat config file would get corrupted due to simultaneous read/write cycles only retrieving half the file as it was being written. This was not prevented by flock(), and caused behaviour such as being locked out of the admin tool, due to admin username / password missing, and other settings "disappearing".
 
 Recommended minimum Apache configuration: 
 
